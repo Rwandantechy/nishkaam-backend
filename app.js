@@ -30,7 +30,9 @@ app.use("/blogImages", express.static(images));
 //routes setup
 app.use("/blogs", blogsRoutes);
 app.use("/", usersRoutes);
-
+app.use("/ready", (req, res) => {
+  res.status(200).send("Backend is ready");
+});
 // Error handling
 app.use((req, res) => {
   // render 404.ejs
