@@ -5,18 +5,17 @@ const {
   verifyAuthToken,
 } = require("../Middlewares/jwtAuthorization.js");
 const { hashInputData } = require("../Middlewares/hashInputData.js");
-const { ObjectId } = require("mongodb");
+const transporter = require("../Middlewares/nodemailerFunction.js");
 const bcrypt = require("bcrypt");
-
 const { v4: uuidv4 } = require("uuid");
 
-//_________________ Get all users____________________/
+// create a user
 
 const createUser = async (req, res) => {
   try {
     const usersCollection = getCollection("users");
     const userData = req.body;
-    // Check if the email already exists
+   // Check if the email already exists
     const existingUser = await usersCollection.findOne({
       email: userData.email,
     });
@@ -32,30 +31,38 @@ const createUser = async (req, res) => {
 
     // add hashed password to the user data
     userData.password = hashedPassword;
+    // Add other user data
+    userData.loggedin = false;
+    userData.verified = false;
+    userData.resetPasswordToken = null;
+    userData.resetPasswordExpires = null;
+    userData.unsubscribed = false;
+    userData.createdAt = new Date();
+    userData.updatedAt = new Date();
+    userData.deletedAt = null;
+    userData.deleted = false;
+    userData.role = "user";
+    userData.active = false;
 
     // Insert the user into the users collection
     const result = await usersCollection.insertOne(userData);
 
-    // Create a user object with selected fields for response
-    const createdUser = {
-      _id: result.insertedId,
-      username: result.username,
-      email: result.email,
-    };
-
+    if (result.insertedCount !== 1) {
+      return res.status(500).json({ error: "User registration failed." });
+    }
+    
     // Respond with status for pending email verification
     res.status(201).json({
-      status: "registered",
-      message: " you will need to verify your email to login later.",
-      user: createdUser,
+      status: "User is registered successfully. ",
+      message: " you will need to verify your email before  signing in..",
+      
     });
   } catch (error) {
-    console.error("Error making the registration:", error);
+    console.error("Error making user registration:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-//_______________ Login as a user_______________/
+// user login
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,27 +75,149 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials." });
     }
 
+    // Check if the user is verified
+    if (!user.verified) {
+      // Generate a verification token
+      const verificationToken = uuidv4();
+      // save the token in the database and some user's uncritical data , and timestamps  and expiration time
+      const verificationData = {
+        token: verificationToken,
+        userId: user._id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      };
+      const verificationTokensCollection = getCollection("verificationTokens");
+      await verificationTokensCollection.insertOne(verificationData);
+
+      // Generate a unique verification link
+      const verificationLink = `http://localhost:4000/verify?token=${verificationToken}`;
+
+      // Send the verification link to the user's email
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Account Login Verification",
+        text: `You are receiving this because you (or someone else) have requested to log into your account.\n\nPlease click on the following link, or paste this into your browser to complete the process:\n\n${verificationLink}\n\nIf you did not request this, please ignore this email and your password will remain unchanged.\n`,
+      };
+
+      // Send mail with defined transport object
+      await transporter.sendMail(mailOptions);
+      res.status(200).json({
+        message:
+          "the verification is sent to your email, please verify your email  first  to login.",
+      });
+      return res
+        .status(401)
+        .json({ error: "Account not verified. Please verify your email." });
+    }
+
+    // Check if the user is unsubscribed
+    if (user.unsubscribed) {
+      return res.status(401).json({
+        error: "Account is unsubscribed. Please sign up again to login.",
+      });
+    }
+
+    // Check if the user is already logged in
+    if (user.loggedin) {
+      return res
+        .status(401)
+        .json({ error: "User already logged in. refresh your page" });
+    }
+
     // Compare the provided password with the hashed password in the database
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ error: "Invalid credentials. try again" });
+    }
+    // prepare the token for the user fields 
+    const tokenData={
+      _id:user._id,
+      email:user.email,
+      username:user.username,
+      role:user.role,
+      verified:user.verified,
+      active:user.active
     }
 
-    // Generate a JWT token for the logged-in user
-    const token = generateAuthToken(user);
 
+    // generate the token for the user
+    const jwttoken = generateAuthToken(tokenData);
+    // update some metadata in the user collection because they are logged in
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { loggedin: true } }
+    );
     res.status(200).json({
       message: "User logged in successfully.",
+      token: jwttoken,
       user: {
-        _id: user._id,
         username: user.username,
         email: user.email,
       },
-      token: token,
     });
   } catch (error) {
     console.error("Error logging in:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+// verify user with token
+const verifyUser = async (req, res) => {
+  try {
+    const token = req.query.token;
+
+    const verificationTokensCollection = getCollection("verificationTokens");
+    const verificationToken = await verificationTokensCollection.findOne({
+      token,
+    });
+
+    if (!verificationToken) {
+      return res
+        .status(404)
+        .json({ error: "Invalid or expired verification token." });
+    }
+
+    // Check if the verification token has expired
+    if (verificationToken.expiresAt < Date.now()) {
+      // Delete the expired verification token from the database
+      await verificationTokensCollection.deleteOne({ token });
+      return res.status(400).json({ error: "Verification token has expired." });
+    }
+
+    const usersCollection = getCollection("users");
+    const user = await usersCollection.findOne({
+      _id: verificationToken.userId,
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ error: "User not found. Unable to verify the account." });
+    }
+
+    if (user.verified) {
+      return res
+        .status(400)
+        .json({ error: "User already verified. Please proceed to login." });
+    }
+
+    // Update user's verified status and activate the account
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { verified: true, active: true } }
+    );
+
+    // Delete the verification token from the database
+    await verificationTokensCollection.deleteOne({ token });
+
+    res.status(200).json({
+      message: "User verified successfully.",
+      loginUrl: "http://localhost:3000/login", // URL for login page
+    });
+  } catch (error) {
+    console.error("Error verifying user:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -235,4 +364,5 @@ module.exports = {
   resetPassword,
   updateUserById,
   setNewPassword,
+  verifyUser,
 };

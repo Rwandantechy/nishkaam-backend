@@ -9,6 +9,7 @@ const compression = require("compression");
 const methodOverride = require("method-override");
 const path = require("path");
 const helmet = require("helmet");
+const ejs = require("ejs");
 // const fs = require("fs");
 const app = express();
 app.use(morgan("dev"));
@@ -22,10 +23,22 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
+app.set("view engine", "ejs");
 const images = path.join(__dirname, "blogImages");
 app.use("/blogImages", express.static(images));
 
 //routes setup
-app.use("/api/blogs", blogsRoutes);
-app.use("/api/users", usersRoutes);
+app.use("/blogs", blogsRoutes);
+app.use("/", usersRoutes);
+
+// Error handling
+app.use((req, res) => {
+  // render 404.ejs
+  res.status(404).render("404");
+ 
+});
+
+
+
+
 module.exports = app;

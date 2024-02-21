@@ -7,6 +7,7 @@ const collections = {
   blogs: "blogs",
   messages: "messages",
   users: "users",
+  verificationTokens: "verificationTokens",
  
 };
 
