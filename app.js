@@ -31,7 +31,7 @@ app.use("/blogImages", express.static(images));
 app.use("/blogs", blogsRoutes);
 app.use("/", usersRoutes);
 app.use("/ready", (req, res) => {
-  res.status(200).send("Backend is ready");
+  res.status(200).render("index");
 });
 // Error handling
 app.use((req, res) => {
