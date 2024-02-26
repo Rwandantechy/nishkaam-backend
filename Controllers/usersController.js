@@ -45,12 +45,7 @@ const createUser = async (req, res) => {
     userData.active = false;
 
     // Insert the user into the users collection
-    const result = await usersCollection.insertOne(userData);
-
-    if (result.insertedCount !== 1) {
-      throw new Error("User registration failed.");
-    }
-
+    await usersCollection.insertOne(userData);
     // Respond with status for pending email verification
     return res.status(201).json({
       status: "User is registered successfully.",
