@@ -13,9 +13,7 @@ const { v4: uuidv4 } = require("uuid");
 const createUser = async (req, res) => {
   try {
     const usersCollection = getCollection("users");
-    const userData = req.body;
-    console.log(userData);
-    console.log(req.body.email);
+    const userData = req.body;   
 
     // Check if the email already exists
     const existingUser = await usersCollection.findOne({
@@ -50,8 +48,7 @@ const createUser = async (req, res) => {
     await usersCollection.insertOne(userData);
     // Respond with status for pending email verification
     return res.status(201).json({
-      status: "User is registered successfully.",
-      message: "You will need to verify your email before signing in.",
+        message: "User is registered successfully.You will need to verify your email before signing in.",
     });
   } catch (error) {
     console.error("Error making user registration:", error);

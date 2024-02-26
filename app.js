@@ -15,7 +15,21 @@ connectDatabase();
 
 // Middleware setup
 
-app.use(cors());
+// Allowed IPs
+const allowedIPs = process.env.ALLOWED_IPS.split(",");
+
+// CORS options
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedIPs.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(compression());
 app.use(express.json());
@@ -38,10 +52,6 @@ app.use("/", (req, res) => {
 app.use((req, res) => {
   // render 404.ejs
   res.status(404).render("404");
- 
 });
-
-
-
 
 module.exports = app;
