@@ -14,6 +14,7 @@ const createUser = async (req, res) => {
   try {
     const usersCollection = getCollection("users");
     const userData = req.body;
+    console.log(userData);
 
     // Check if the email already exists
     const existingUser = await usersCollection.findOne({
