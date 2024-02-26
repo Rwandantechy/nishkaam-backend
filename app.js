@@ -9,8 +9,6 @@ const compression = require("compression");
 const methodOverride = require("method-override");
 const path = require("path");
 const helmet = require("helmet");
-const ejs = require("ejs");
-// const fs = require("fs");
 const app = express();
 app.use(morgan("dev"));
 connectDatabase();
