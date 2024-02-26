@@ -33,9 +33,9 @@ app.use("/", usersRoutes);
 app.use("/ready", (req, res) => {
   res.status(200).render("index");
 });
-// app.use("/", (req, res) => {
-//   res.status(200).render("index");
-// });
+app.use("/", (req, res) => {
+  res.status(200).render("index");
+});
 // Error handling
 app.use((req, res) => {
   // render 404.ejs
