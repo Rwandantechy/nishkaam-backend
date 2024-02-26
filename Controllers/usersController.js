@@ -10,12 +10,12 @@ const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 
 // create a user
-
 const createUser = async (req, res) => {
   try {
     const usersCollection = getCollection("users");
     const userData = req.body;
-   // Check if the email already exists
+
+    // Check if the email already exists
     const existingUser = await usersCollection.findOne({
       email: userData.email,
     });
@@ -48,20 +48,20 @@ const createUser = async (req, res) => {
     const result = await usersCollection.insertOne(userData);
 
     if (result.insertedCount !== 1) {
-      return res.status(500).json({ error: "User registration failed." });
+      throw new Error("User registration failed.");
     }
-    
+
     // Respond with status for pending email verification
-    res.status(201).json({
-      status: "User is registered successfully. ",
-      message: " you will need to verify your email before  signing in..",
-      
+    return res.status(201).json({
+      status: "User is registered successfully.",
+      message: "You will need to verify your email before signing in.",
     });
   } catch (error) {
     console.error("Error making user registration:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 // user login
 const loginUser = async (req, res) => {
   try {
@@ -132,16 +132,15 @@ const loginUser = async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({ error: "Invalid credentials. try again" });
     }
-    // prepare the token for the user fields 
-    const tokenData={
-      _id:user._id,
-      email:user.email,
-      username:user.username,
-      role:user.role,
-      verified:user.verified,
-      active:user.active
-    }
-
+    // prepare the token for the user fields
+    const tokenData = {
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      verified: user.verified,
+      active: user.active,
+    };
 
     // generate the token for the user
     const jwttoken = generateAuthToken(tokenData);
