@@ -29,15 +29,19 @@ connectDatabase();
 //   },
 // };
 
+
+
 app.use(cors());
 app.use(helmet());
 app.use(compression());
 app.use(express.json());
+app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
 const images = path.join(__dirname, "blogImages");
 app.use("/blogImages", express.static(images));
+
 
 //routes setup
 app.use("/blogs", blogsRoutes);
