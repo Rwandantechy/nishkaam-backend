@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  
+  <!-- head -->
+  <%- include('./partials/head.ejs') %>
+  <body>
+    <!-- header -->
+    <%- include('./partials/header.ejs') %>
+
+    <!-- sidebar -->
+    <%- include('./partials/aside.ejs') %>
+
+    <!-- Main Content -->
+    <div class="p-4 sm:ml-64">
+      <div
+        class="p-4 border-2 border-gray-200 mt-14 border-dashed rounded-lg dark:border-gray-700"
+      >
+        <div class="container mx-auto p-6">
+          <h1 class="text-2xl font-bold mb-6">Create a New Blog Post</h1>
+
+          <!-- Blog Form -->
+          <form
+            id="blogForm"
+            class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+          >
+            <!-- Blog Title -->
+            <div class="mb-4">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="title"
+              >
+                Blog Title
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="title"
+                type="text"
+                placeholder="Enter blog title"
+                required
+              />
+            </div>
+
+            <!-- Blog Content -->
+            <div class="mb-4 my-tool">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="content"
+              >
+                Blog Content
+              </label>
+              <textarea
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="content"
+                placeholder="Enter blog content"
+                rows="12"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Category -->
+            <div class="mb-4">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="category"
+              >
+                Category
+              </label>
+              <select
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="category"
+                required
+              >
+                <option value="" disabled selected>Select a category</option>
+                <option value="technology">Technology</option>
+                <option value="travel">Travel</option>
+                <option value="food">Food</option>
+                <option value="fashion">Fashion</option>
+                <!-- Add more categories as needed -->
+              </select>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="mb-4">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="image"
+              >
+                Blog Image
+              </label>
+              <input
+                type="file"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="image"
+                accept="image/*"
+                required
+              />
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-center justify-between">
+              <button
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="button"
+                onclick="createBlog()"
+              >
+                Create Blog
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    tinymce.init({
+      selector: "textarea",
+      plugins:
+        "ai tinycomments mentions anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed permanentpen footnotes advtemplate advtable advcode editimage tableofcontents mergetags powerpaste tinymcespellchecker autocorrect a11ychecker typography inlinecss",
+      toolbar:
+        "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | align lineheight | tinycomments | checklist numlist bullist indent outdent | emoticons charmap | removeformat",
+      tinycomments_mode: "embedded",
+      tinycomments_author: "Author name",
+      mergetags_list: [
+        { value: "First.Name", title: "First Name" },
+        { value: "Email", title: "Email" },
+      ],
+      ai_request: (request, respondWith) =>
+        respondWith.string(() =>
+          Promise.reject("See docs to implement AI Assistant")
+        ),
+    });
+  </script>
+</html>

@@ -1,8 +1,8 @@
-/* eslint-disable no-undef */
 const express = require("express");
 const morgan = require("morgan");
 const blogsRoutes = require("./routes/blogsRoutes");
 const usersRoutes = require("./routes/usersRoutes");
+const payRoutes = require("./routes/paymentsRoutes");
 const { connectDatabase } = require("./database.js");
 const cors = require("cors");
 const compression = require("compression");
@@ -10,51 +10,56 @@ const methodOverride = require("method-override");
 const path = require("path");
 const helmet = require("helmet");
 const app = express();
-app.use(morgan("dev"));
-connectDatabase();
 
 // Middleware setup
-
-// Allowed IPs
-// const allowedIPs = process.env.ALLOWED_IPS.split(",");
-
-// // CORS options
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (allowedIPs.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-// };
-
-
-
+app.use(morgan("dev"));
 app.use(cors());
 app.use(helmet());
 app.use(compression());
 app.use(express.json());
-app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
-const images = path.join(__dirname, "blogImages");
-app.use("/blogImages", express.static(images));
+// eslint-disable-next-line no-undef
+app.use(express.static(path.join(__dirname, "public")));
 
 
-//routes setup
+// Database connection
+connectDatabase();
+
+// Routes setup
 app.use("/blogs", blogsRoutes);
 app.use("/", usersRoutes);
-app.use("/ready", (req, res) => {
+app.use("/pay", payRoutes);
+
+// Payment confirmation route
+app.get("/paytm", (req, res) => {
+  res.status(200).render("pay");
+});
+
+// health check route
+app.get("/ready", (req, res) => {
   res.status(200).render("index");
 });
-// app.use("/", (req, res) => {
-//   res.status(200).render("index");
-// });
-// Error handling
+// Home route
+app.get("/", (req, res) => {
+  res.status(200).render("home");
+});
+// forgot password route
+app.get("/forgot", (req, res) => {
+  res.status(200).render("forgot");
+});
+// admin route
+app.get("/admin", (req, res) => {
+  res.status(200).render("admin");
+});
+// blog route
+app.get("/admin/blog", (req, res) => {
+  res.status(200).render("createBlog");
+});
+
+// 404 route
 app.use((req, res) => {
-  // render 404.ejs
   res.status(404).render("404");
 });
 

@@ -6,4 +6,5 @@ node_modules/
 .env.test.local
 .database.js
 .env.production.local
-```
+/Controllers/payments/config.js
+
